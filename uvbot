@@ -1,0 +1,93 @@
+import os
+import datetime
+import random
+import emoji
+import time
+import asyncio
+from twilio.rest import Client
+from pyopenuv import Client as uvClient
+from pyopenuv.errors import OpenUvError
+
+
+account_sid = '<Redacted>'
+auth_token = '<Redacted>'
+client = Client(account_sid, auth_token)
+def choose_msg(uv):
+    uvi = "UV is now "+str(uv)
+    header = emoji.emojize(':sun::police_car_light: UV ALERT :police_car_light::sun:')+"\n"
+    choices = [
+        header+" Rev up those friers, "+uvi,
+        header+" Its tan time. "+uvi,
+        header+" If you ain't gettin tan yet, you should probably consider it, "+uvi,
+        header+" TAN TAN TAN TAN TAN. "+uvi,
+        header+" Guess what time it is. Tan time. "+uvi,
+        header+" Suns out, Madi's out. "+uvi,
+        header+" HEY, YOU! "+uvi,
+        header+" I hope y'aint inside. "+uvi,
+        header+" Tan O'clock "+uvi,
+        header+" Bad news. You aren't outside yet. Good news, "+uvi,
+        header+" WHO: madi, WHEN: now, WHERE: outside, WHAT: tan, WHY: tan "+uvi,
+        header+" Another day, another sun sesh. "+uvi,
+        header+" Bring ya sunnys "+uvi,
+        header+" Surf up "+uvi,
+        header+" Tan = opposite/adjacent "+uvi,
+        header+" SUNNY AF "+uvi,
+        header+" SUNNY SUN SUNSHINE "+uvi,
+        header+" Ayo "+uvi,
+        header+" Whatcha up to, "+uvi,
+        header+" You're either tannin, or in between tans. "+uvi,
+        header+" Good morning, Mr West. "+uvi,
+        header+" Ah lawdy "+uvi,
+        header+" Did you do wordle? "+uvi,
+        header+" Ope! "+uvi,
+        header+" Can't be mad and tan at the same time. "+uvi,
+        header+" Put the SUN in SUNstroke "+uvi,
+        header+" UH OH "+uvi,
+        header+" Please follow protocol, "+uvi,
+        header+" HOT HOT HOT, "+uvi
+    ]
+    return random.choice(choices)
+
+
+
+def text_madi(uv):
+    b = choose_msg(uv)
+    message = client.messages \
+        .create(
+            body=b,
+            from_='<Redacted>',
+            to='<Redacted>'
+            
+        )
+    #sleep half a day before we start checking again
+    time.sleep(43200)
+
+def text_nick():
+    message = client.messages \
+        .create(
+            body='UV Fetch broke on Madis UV Bot',
+            from_='<Redacted>',
+            to='<Redacted>'
+        )
+
+async def checkUV():
+    client = uvClient("8788173de3a5bdc28b88953d8d82b0da ", "43.109260", "-88.209740", altitude="873")
+    try:
+        result = await client.uv_index()
+        uv = result['result']['uv']
+        if uv > 7:
+            #Alert the gf
+            text_madi(uv)
+
+    except OpenUvError as err:
+        text_nick()
+
+while True:
+    #Run until interrupted, checking every 10 min if it's peak sun time
+    tenmin = 600
+    time.sleep(tenmin)
+    now = datetime.datetime.now()
+    if now.hour>=11 and now.hour<18:
+        #If its in peak sun time, check if uv is above 7
+        asyncio.run(checkUV())
+    
